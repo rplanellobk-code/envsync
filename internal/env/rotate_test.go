@@ -96,3 +96,14 @@ func TestRotateAuditRecorded(t *testing.T) {
 		t.Errorf("last action: want rotate got %q", entries[len(entries)-1].Action)
 	}
 }
+
+func TestRotateOldPassphraseNoLongerValid(t *testing.T) {
+	rot, vault, _, _ := newRotateFixture(t)
+	_ = vault.Push("prod", map[string]string{"K": "v"}, "old-pass")
+	if _, err := rot.Rotate("prod", "old-pass", "new-pass"); err != nil {
+		t.Fatalf("rotate: %v", err)
+	}
+	if _, err := vault.Pull("prod", "old-pass"); err == nil {
+		t.Fatal("expected error pulling with old passphrase after rotate")
+	}
+}
