@@ -87,3 +87,12 @@ func TestExportDeterministicOrder(t *testing.T) {
 		t.Errorf("got %q, want %q", out, want)
 	}
 }
+
+func TestExportEmptyMap(t *testing.T) {
+	vars := map[string]string{}
+	out := Export(vars, ExportOptions{Format: FormatDotenv})
+	want := ""
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
