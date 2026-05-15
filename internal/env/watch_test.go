@@ -86,3 +86,41 @@ func TestWatchInitialPullError(t *testing.T) {
 		t.Fatal("expected error for missing environment, got nil")
 	}
 }
+
+// TestWatchDetectsMultipleChanges verifies that the watcher emits an event for
+// each successive mutation while the context remains active.
+func TestWatchDetectsMultipleChanges(t *testing.T) {
+	v, pass := newWatchFixture(t)
+	env := "multi"
+
+	if err := v.Push(env, map[string]string{"K": "v0"}, pass); err != nil {
+		t.Fatalf("push: %v", err)
+	}
+
+	w := NewWatcher(v, pass, 20*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	ch, err := w.Watch(ctx, env)
+	if err != nil {
+		t.Fatalf("Watch: %v", err)
+	}
+
+	// Push two successive changes with enough spacing for the poller to catch each.
+	go func() {
+		time.Sleep(40 * time.Millisecond)
+		_ = v.Push(env, map[string]string{"K": "v1"}, pass)
+		time.Sleep(60 * time.Millisecond)
+		_ = v.Push(env, map[string]string{"K": "v2"}, pass)
+	}()
+
+	var received int
+	for received < 2 {
+		select {
+		case <-ch:
+			received++
+		case <-ctx.Done():
+			t.Fatalf("timed out after %d/2 change events", received)
+		}
+	}
+}
