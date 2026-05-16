@@ -12,6 +12,13 @@
 // ErrSignatureMismatch when the digest does not match, indicating that the
 // contents were modified after signing.
 //
+// # Reserved keys
+//
+// The key _ENVSYNC_SIG is reserved for internal use. Callers should not set
+// this key manually; doing so will cause Verify to treat the map as unsigned
+// or produce a spurious ErrSignatureMismatch if the value does not match the
+// computed digest.
+//
 // # Typical usage
 //
 //	signed := env.Sign(vars, passphrase)
