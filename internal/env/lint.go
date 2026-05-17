@@ -74,3 +74,17 @@ func Lint(env map[string]string, rules []LintRule) []LintViolation {
 	}
 	return violations
 }
+
+// LintErrors returns all violations as a slice of errors, which is convenient
+// for passing to errors.Join or similar aggregation utilities.
+func LintErrors(env map[string]string, rules []LintRule) []error {
+	violations := Lint(env, rules)
+	if len(violations) == 0 {
+		return nil
+	}
+	errs := make([]error, len(violations))
+	for i, v := range violations {
+		errs[i] = v
+	}
+	return errs
+}
